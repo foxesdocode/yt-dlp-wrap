@@ -16,8 +16,48 @@ import { IncomingMessage } from 'http';
 const executableName = 'yt-dlp';
 const progressRegex = /\[download\] *(.*) of ([^ ]*)(:? *at *([^ ]*))?(:? *ETA *([^ ]*))?/;
 
+type YTDlpEventNameDataTypeMap = {
+    close: number | null;
+    error: Error;
+    progress: Progress;
+    ytDlpEvent: any;
+};
+
+type YTDlpEventName = keyof YTDlpEventNameDataTypeMap;
+
+type YTDlpEventListener<EventName extends YTDlpEventName> = (
+    ...args: YTDlpEventNameDataTypeMap[EventName][]
+) => void;
+
+type YTDlpEventNameToEventListenerFunction<ReturnType> = <
+    K extends YTDlpEventName
+>(
+    channel: K,
+    listener: YTDlpEventListener<K>
+) => ReturnType;
+
+type YTDlpEventNameToEventDataFunction<ReturnType> = <K extends YTDlpEventName>(
+    channel: K,
+    ...args: YTDlpEventNameDataTypeMap[K][]
+) => ReturnType;
 export interface YTDlpEventEmitter extends EventEmitter {
     ytDlpProcess?: ChildProcessWithoutNullStreams;
+
+    removeAllListeners(event?: YTDlpEventName | symbol): this;
+    setMaxListeners(n: number): this;
+    getMaxListeners(): number;
+    listenerCount(eventName: YTDlpEventName): number;
+    eventNames(): Array<YTDlpEventName>;
+    addListener: YTDlpEventNameToEventListenerFunction<this>;
+    prependListener: YTDlpEventNameToEventListenerFunction<this>;
+    prependOnceListener: YTDlpEventNameToEventListenerFunction<this>;
+    on: YTDlpEventNameToEventListenerFunction<this>;
+    once: YTDlpEventNameToEventListenerFunction<this>;
+    removeListener: YTDlpEventNameToEventListenerFunction<this>;
+    off: YTDlpEventNameToEventListenerFunction<this>;
+    listeners(eventName: YTDlpEventName): Function[];
+    rawListeners(eventName: YTDlpEventName): Function[];
+    emit: YTDlpEventNameToEventDataFunction<boolean>;
 }
 
 export interface YTDlpPromise<T> extends Promise<T> {
@@ -144,7 +184,7 @@ export default class YTDlpWrap {
         abortSignal: AbortSignal | null = null
     ): YTDlpEventEmitter {
         options = YTDlpWrap.setDefaultOptions(options);
-        const execEventEmitter: YTDlpEventEmitter = new EventEmitter();
+        const execEventEmitter = new EventEmitter() as YTDlpEventEmitter;
         const ytDlpProcess = spawn(this.binaryPath, ytDlpArguments, options);
         execEventEmitter.ytDlpProcess = ytDlpProcess;
         YTDlpWrap.bindAbortSignal(abortSignal, ytDlpProcess);
@@ -304,7 +344,7 @@ export default class YTDlpWrap {
 
     static emitYoutubeDlEvents(
         stringData: string,
-        emitter: YTDlpEventEmitter
+        emitter: YTDlpEventEmitter | YTDlpReadable
     ): void {
         let outputLines = stringData.split(/\r|\n/g).filter(Boolean);
         for (let outputLine of outputLines) {

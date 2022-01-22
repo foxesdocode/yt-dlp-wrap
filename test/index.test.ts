@@ -2,7 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 
-import YTDlpWrap, { YTDlpEventEmitter } from '../src';
+import YTDlpWrap, { YTDlpEventEmitter, YTDlpReadable } from '../src';
 const ytDlpWrap = new YTDlpWrap();
 
 const testVideoPath = 'test/testVideo.mp4';
@@ -20,7 +20,9 @@ const checkFileDownload = function () {
     assert(stats.size > 0);
 };
 
-const checkEventEmitter = function (ytDlpEventEmitter: YTDlpEventEmitter) {
+const checkEventEmitter = function (
+    ytDlpEventEmitter: YTDlpEventEmitter | YTDlpReadable
+) {
     return new Promise((resolve, reject) => {
         let progressDefined = false;
         ytDlpEventEmitter.on('progress', (progressObject) => {
