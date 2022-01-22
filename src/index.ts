@@ -17,16 +17,16 @@ const executableName = 'yt-dlp';
 const progressRegex = /\[download\] *(.*) of ([^ ]*)(:? *at *([^ ]*))?(:? *ETA *([^ ]*))?/;
 
 type YTDlpEventNameDataTypeMap = {
-    close: number | null;
-    error: Error;
-    progress: Progress;
-    ytDlpEvent: any;
+    close: [number | null];
+    error: [Error];
+    progress: [Progress];
+    ytDlpEvent: [eventType: string, eventData: string];
 };
 
 type YTDlpEventName = keyof YTDlpEventNameDataTypeMap;
 
 type YTDlpEventListener<EventName extends YTDlpEventName> = (
-    ...args: YTDlpEventNameDataTypeMap[EventName][]
+    ...args: YTDlpEventNameDataTypeMap[EventName]
 ) => void;
 
 type YTDlpEventNameToEventListenerFunction<ReturnType> = <
@@ -38,7 +38,7 @@ type YTDlpEventNameToEventListenerFunction<ReturnType> = <
 
 type YTDlpEventNameToEventDataFunction<ReturnType> = <K extends YTDlpEventName>(
     channel: K,
-    ...args: YTDlpEventNameDataTypeMap[K][]
+    ...args: YTDlpEventNameDataTypeMap[K]
 ) => ReturnType;
 export interface YTDlpEventEmitter extends EventEmitter {
     ytDlpProcess?: ChildProcessWithoutNullStreams;

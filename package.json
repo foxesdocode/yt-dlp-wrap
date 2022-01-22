@@ -1,6 +1,6 @@
 {
     "name": "yt-dlp-wrap",
-    "version": "2.3.4",
+    "version": "2.3.5",
     "description": "A simple node.js wrapper for yt-dlp.",
     "main": "dist/index.js",
     "scripts": {
