@@ -3,6 +3,7 @@ import {
     ChildProcess,
     ChildProcessWithoutNullStreams,
     execFile,
+    exec,
     ExecFileException,
     spawn,
     SpawnOptionsWithoutStdio,
@@ -322,7 +323,8 @@ export default class YTDlpWrap {
         process: ChildProcess
     ): void {
         signal?.addEventListener('abort', () => {
-            process.kill();
+            if (os.platform() === 'win32') exec('taskkill /pid ' + process.pid + ' /T /F')
+            else process.kill();
         });
     }
 
