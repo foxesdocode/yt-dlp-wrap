@@ -14,7 +14,10 @@ import { Readable } from 'stream';
 import { IncomingMessage } from 'http';
 
 const executableName = 'yt-dlp';
-const progressRegex = /\[download\] *(.*) of ([^ ]*)(:? *at *([^ ]*))?(:? *ETA *([^ ]*))?/;
+const progressRegex =
+    /\[download\] *(.*) of ([^ ]*)(:? *at *([^ ]*))?(:? *ETA *([^ ]*))?/;
+
+//#region YTDlpEventEmitter
 
 type YTDlpEventNameDataTypeMap = {
     close: number | null;
@@ -59,14 +62,74 @@ export interface YTDlpEventEmitter extends EventEmitter {
     rawListeners(eventName: YTDlpEventName): Function[];
     emit: YTDlpEventNameToEventDataFunction<boolean>;
 }
+//#endregion
 
+//#region YTDlpReadable
 export interface YTDlpPromise<T> extends Promise<T> {
     ytDlpProcess?: ChildProcess;
 }
 
+//#endregion
+
+//#region YTDlpReadable
+
+type YTDlpReadableEventName = keyof YTDlpReadableEventNameDataTypeMap;
+
+type YTDlpReadableEventListener<EventName extends YTDlpReadableEventName> = (
+    ...args: YTDlpReadableEventNameDataTypeMap[EventName]
+) => void;
+
+type YTDlpReadableEventNameToEventListenerFunction<ReturnType> = <
+    K extends YTDlpReadableEventName
+>(
+    event: K,
+    listener: YTDlpReadableEventListener<K>
+) => ReturnType;
+
+type YTDlpReadableEventNameToEventDataFunction<ReturnType> = <
+    K extends YTDlpReadableEventName
+>(
+    event: K,
+    ...args: YTDlpReadableEventNameDataTypeMap[K]
+) => ReturnType;
+
+type YTDlpReadableEventNameDataTypeMap = {
+    close: [];
+    progress: [progress: Progress];
+    ytDlpEvent: [eventType: string, eventData: string];
+    data: [chunk: any];
+    end: [];
+    error: [error: Error];
+    pause: [];
+    readable: [];
+    resume: [];
+};
+
 export interface YTDlpReadable extends Readable {
     ytDlpProcess?: ChildProcessWithoutNullStreams;
+
+    /**
+     * Event emitter
+     * The defined events on documents including:
+     * 1. close
+     * 2. data
+     * 3. end
+     * 4. error
+     * 5. pause
+     * 6. readable
+     * 7. resume
+     * 8. ytDlpEvent
+     * 9. progress
+     */
+    addListener: YTDlpReadableEventNameToEventListenerFunction<this>;
+    emit: YTDlpReadableEventNameToEventDataFunction<boolean>;
+    on: YTDlpReadableEventNameToEventListenerFunction<this>;
+    once: YTDlpReadableEventNameToEventListenerFunction<this>;
+    prependListener: YTDlpReadableEventNameToEventListenerFunction<this>;
+    prependOnceListener: YTDlpReadableEventNameToEventListenerFunction<this>;
+    removeListener: YTDlpReadableEventNameToEventListenerFunction<this>;
 }
+//#endregion
 
 export interface YTDlpOptions extends SpawnOptionsWithoutStdio {
     maxBuffer?: number;
@@ -245,6 +308,7 @@ export default class YTDlpWrap {
         abortSignal: AbortSignal | null = null
     ): YTDlpReadable {
         const readStream: YTDlpReadable = new Readable({ read(size) {} });
+
         options = YTDlpWrap.setDefaultOptions(options);
         ytDlpArguments = ytDlpArguments.concat(['-o', '-']);
         const ytDlpProcess = spawn(this.binaryPath, ytDlpArguments, options);
@@ -361,7 +425,11 @@ export default class YTDlpWrap {
                     );
                     progressObject.currentSpeed = progressMatch[4];
                     progressObject.eta = progressMatch[6];
-                    emitter.emit('progress', progressObject);
+
+                    (emitter as YTDlpEventEmitter).emit(
+                        'progress',
+                        progressObject
+                    );
                 }
 
                 let eventType = outputLine
@@ -372,7 +440,11 @@ export default class YTDlpWrap {
                     outputLine.indexOf(' '),
                     outputLine.length
                 );
-                emitter.emit('ytDlpEvent', eventType, eventData);
+                (emitter as YTDlpEventEmitter).emit(
+                    'ytDlpEvent',
+                    eventType,
+                    eventData
+                );
             }
         }
     }
