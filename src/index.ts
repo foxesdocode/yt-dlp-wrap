@@ -3,6 +3,7 @@ import {
     ChildProcess,
     ChildProcessWithoutNullStreams,
     execFile,
+    exec,
     ExecFileException,
     spawn,
     SpawnOptionsWithoutStdio,
@@ -20,16 +21,16 @@ const progressRegex =
 //#region YTDlpEventEmitter
 
 type YTDlpEventNameDataTypeMap = {
-    close: number | null;
-    error: Error;
-    progress: Progress;
-    ytDlpEvent: any;
+    close: [number | null];
+    error: [Error];
+    progress: [Progress];
+    ytDlpEvent: [eventType: string, eventData: string];
 };
 
 type YTDlpEventName = keyof YTDlpEventNameDataTypeMap;
 
 type YTDlpEventListener<EventName extends YTDlpEventName> = (
-    ...args: YTDlpEventNameDataTypeMap[EventName][]
+    ...args: YTDlpEventNameDataTypeMap[EventName]
 ) => void;
 
 type YTDlpEventNameToEventListenerFunction<ReturnType> = <
@@ -41,7 +42,7 @@ type YTDlpEventNameToEventListenerFunction<ReturnType> = <
 
 type YTDlpEventNameToEventDataFunction<ReturnType> = <K extends YTDlpEventName>(
     channel: K,
-    ...args: YTDlpEventNameDataTypeMap[K][]
+    ...args: YTDlpEventNameDataTypeMap[K]
 ) => ReturnType;
 export interface YTDlpEventEmitter extends EventEmitter {
     ytDlpProcess?: ChildProcessWithoutNullStreams;
@@ -386,7 +387,8 @@ export default class YTDlpWrap {
         process: ChildProcess
     ): void {
         signal?.addEventListener('abort', () => {
-            process.kill();
+            if (os.platform() === 'win32') exec('taskkill /pid ' + process.pid + ' /T /F')
+            else process.kill();
         });
     }
 
