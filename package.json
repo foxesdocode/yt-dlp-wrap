@@ -1,13 +1,15 @@
 {
     "name": "yt-dlp-wrap",
-    "version": "2.3.4",
+    "version": "2.3.5",
     "description": "A simple node.js wrapper for yt-dlp.",
+    "files": [
+        "dist"
+    ],
     "main": "dist/index.js",
     "scripts": {
         "build": "tsc",
         "test": "mocha --require ts-node/register --timeout 300000 test/**/*.test.ts",
-        "testDebug": "mocha --require ts-node/register --inspect-brk --timeout 300000 test/**/*.test.ts",
-        "install": "tsc"
+        "testDebug": "mocha --require ts-node/register --inspect-brk --timeout 300000 test/**/*.test.ts"
     },
     "author": "foxes do code",
     "repository": {
