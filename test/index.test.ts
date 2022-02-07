@@ -25,24 +25,32 @@ const checkEventEmitter = function (
 ) {
     return new Promise((resolve, reject) => {
         let progressDefined = false;
-        ytDlpEventEmitter.on('progress', (progressObject) => {
-            if (
-                progressObject.percent != undefined ||
-                progressObject.totalSize != undefined ||
-                progressObject.currentSpeed != undefined ||
-                progressObject.eta != undefined
-            )
-                progressDefined = true;
-        });
+        (ytDlpEventEmitter as YTDlpEventEmitter).on(
+            'progress',
+            (progressObject) => {
+                if (
+                    progressObject.percent != undefined ||
+                    progressObject.totalSize != undefined ||
+                    progressObject.currentSpeed != undefined ||
+                    progressObject.eta != undefined
+                )
+                    progressDefined = true;
+            }
+        );
 
         let ytDlpEventFound = false;
-        ytDlpEventEmitter.on('ytDlpEvent', (eventType, eventData) => {
-            if (eventType == 'youtube' && eventData.includes(testVideoId))
-                ytDlpEventFound = true;
-        });
+        (ytDlpEventEmitter as YTDlpEventEmitter).on(
+            'ytDlpEvent',
+            (eventType, eventData) => {
+                if (eventType == 'youtube' && eventData.includes(testVideoId))
+                    ytDlpEventFound = true;
+            }
+        );
 
-        ytDlpEventEmitter.on('error', (error) => reject(error));
-        ytDlpEventEmitter.on('close', () => {
+        (ytDlpEventEmitter as YTDlpEventEmitter).on('error', (error) =>
+            reject(error)
+        );
+        (ytDlpEventEmitter as YTDlpEventEmitter).on('close', () => {
             assert(fs.existsSync(testVideoPath));
             const stats = fs.statSync(testVideoPath);
             fs.unlinkSync(testVideoPath);
