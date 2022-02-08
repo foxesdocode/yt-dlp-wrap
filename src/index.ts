@@ -329,8 +329,8 @@ export default class YTDlpWrap {
         ytDlpProcess.on('close', (code) => {
             if (code === 0 || ytDlpProcess.killed){
                 readStream.emit('close');
-                readStream.emit('end');
                 readStream.destroy();
+                readStream.emit('end')
             }
             else{
                 const error = YTDlpWrap.createError(code, processError, stderrData)

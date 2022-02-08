@@ -21,11 +21,11 @@ const checkFileDownload = function () {
 };
 
 const checkEventEmitter = function (
-    ytDlpEventEmitter: YTDlpEventEmitter | YTDlpReadable
+    ytDlpEventEmitter: YTDlpEventEmitter
 ) {
     return new Promise((resolve, reject) => {
         let progressDefined = false;
-        (ytDlpEventEmitter as YTDlpEventEmitter).on(
+        ytDlpEventEmitter.on(
             'progress',
             (progressObject) => {
                 if (
@@ -39,7 +39,7 @@ const checkEventEmitter = function (
         );
 
         let ytDlpEventFound = false;
-        (ytDlpEventEmitter as YTDlpEventEmitter).on(
+        ytDlpEventEmitter.on(
             'ytDlpEvent',
             (eventType, eventData) => {
                 if (eventType == 'youtube' && eventData.includes(testVideoId))
@@ -47,10 +47,10 @@ const checkEventEmitter = function (
             }
         );
 
-        (ytDlpEventEmitter as YTDlpEventEmitter).on('error', (error) =>
+        ytDlpEventEmitter.on('error', (error) =>
             reject(error)
         );
-        (ytDlpEventEmitter as YTDlpEventEmitter).on('close', () => {
+        ytDlpEventEmitter.on('close', () => {
             assert(fs.existsSync(testVideoPath));
             const stats = fs.statSync(testVideoPath);
             fs.unlinkSync(testVideoPath);
@@ -61,6 +61,52 @@ const checkEventEmitter = function (
         });
     });
 };
+
+const checkReadableStream = (ytDlpStream: YTDlpReadable) => {
+    return new Promise((resolve, reject) => {
+
+        let progressDefined = false;
+        ytDlpStream.on('progress', (progressObject) => {
+                if (
+                    progressObject.percent != undefined ||
+                    progressObject.totalSize != undefined ||
+                    progressObject.currentSpeed != undefined ||
+                    progressObject.eta != undefined
+                )
+                    progressDefined = true;
+            }
+        );
+
+        let ytDlpEventFound = false;
+        ytDlpStream.on(
+            'ytDlpEvent',
+            (eventType, eventData) => {
+                if (eventType == 'youtube' && eventData.includes(testVideoId))
+                    ytDlpEventFound = true;
+            }
+        );
+
+        ytDlpStream.on('error', (error) =>{
+            console.log(error)
+            reject(error)
+        });
+        
+        // I think fs.stateSync calls close again
+        let second = false
+        ytDlpStream.on('close', () => {
+            if(second) resolve(undefined)
+            else {
+                second = true
+                assert(fs.existsSync(testVideoPath));
+                const stats = fs.statSync(testVideoPath);
+                assert.strictEqual(stats.size, 171516);
+                assert(progressDefined);
+                assert(ytDlpEventFound);
+                fs.unlinkSync(testVideoPath);
+            }
+        });
+    });
+}
 
 describe('downloading yt-dlp binary', function () {
     it('should download from github', async function () {
@@ -88,7 +134,7 @@ describe('download video functions', function () {
             'worst',
         ]);
         readableStream.pipe(fs.createWriteStream(testVideoPath));
-        await checkEventEmitter(readableStream);
+        await checkReadableStream(readableStream)
     });
 });
 
