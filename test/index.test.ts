@@ -4,7 +4,7 @@ const os = require('os');
 
 import YTDlpWrap, { YTDlpEventEmitter, YTDlpReadable } from '../src';
 
-let fileName = os.platform() == 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
+const fileName = os.platform() == 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
 const ytDlpWrap = new YTDlpWrap('./' + fileName);
 
 const testVideoPath = 'test/testVideo.mp4';
