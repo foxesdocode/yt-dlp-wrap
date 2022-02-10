@@ -4,6 +4,7 @@ import {
     ChildProcessWithoutNullStreams,
     execFile,
     exec,
+    execSync,
     ExecFileException,
     spawn,
     SpawnOptionsWithoutStdio,
@@ -13,6 +14,7 @@ import https from 'https';
 import os from 'os';
 import { Readable } from 'stream';
 import { IncomingMessage } from 'http';
+import { stdout } from 'process';
 
 const executableName = 'yt-dlp';
 const progressRegex =
@@ -387,8 +389,17 @@ export default class YTDlpWrap {
         process: ChildProcess
     ): void {
         signal?.addEventListener('abort', () => {
-            if (os.platform() === 'win32') exec('taskkill /pid ' + process.pid + ' /T /F')
-            else process.kill();
+            try {
+                if (os.platform() === 'win32')
+                    execSync(`taskkill /pid ${process.pid} /T /F`);
+                else {
+                    execSync(`kill $(pgrep -P ${process.pid})`);
+                }
+            } catch (e) {
+                // at least we tried
+            } finally {
+                process.kill(); // call to make sure that object state is updated even if task might be already killed by OS
+            }
         });
     }
 

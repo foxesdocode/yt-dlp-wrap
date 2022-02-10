@@ -3,7 +3,9 @@ const fs = require('fs');
 const os = require('os');
 
 import YTDlpWrap, { YTDlpEventEmitter, YTDlpReadable } from '../src';
-const ytDlpWrap = new YTDlpWrap();
+
+let fileName = os.platform() == 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
+const ytDlpWrap = new YTDlpWrap('./' + fileName);
 
 const testVideoPath = 'test/testVideo.mp4';
 const testVideoId = 'C0DPdy98e4c';
@@ -13,11 +15,10 @@ const isValidVersion = (version: string) =>
     !isNaN(Date.parse(version.substring(0, 10).replace(/\./g, '-')));
 
 const checkFileDownload = function () {
-    let fileName = os.platform() == 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
     assert(fs.existsSync('./' + fileName));
-    const stats = fs.statSync('./' + fileName);
-    fs.unlinkSync('./' + fileName);
-    assert(stats.size > 0);
+    if (os.platform() !== 'win32') {
+        fs.chmodSync('./' + fileName, '777');
+    }
 };
 
 const checkEventEmitter = function (
@@ -165,5 +166,13 @@ describe('utility functions', function () {
         let extractorList = await ytDlpWrap.getExtractorDescriptions();
         assert(Array.isArray(extractorList));
         assert(extractorList.includes('YouTube playlists'));
+    });
+});
+
+describe('delete yt-dlp', function () {
+    it('deletes yt-dlp binary', function () {
+        const stats = fs.statSync('./' + fileName);
+        fs.unlinkSync('./' + fileName);
+        assert(stats.size > 0);
     });
 });
