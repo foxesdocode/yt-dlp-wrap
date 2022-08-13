@@ -173,10 +173,11 @@ export default class YTDlpWrap {
         message: IncomingMessage,
         filePath: string
     ): Promise<IncomingMessage> {
+        const file = fs.createWriteStream(filePath);
         return new Promise<IncomingMessage>((resolve, reject) => {
-            message.pipe(fs.createWriteStream(filePath));
+            message.pipe(file);
             message.on('error', (e) => reject(e));
-            message.on('end', () =>
+            file.on('finish', () =>
                 message.statusCode == 200 ? resolve(message) : reject(message)
             );
         });
