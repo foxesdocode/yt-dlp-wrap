@@ -18,7 +18,7 @@ import { stdout } from 'process';
 
 const executableName = 'yt-dlp';
 const progressRegex =
-    /\[download\] *(.*) of ([^ ]*)(:? *at *([^ ]*))?(:? *ETA *([^ ]*))?/;
+    /\[download\] *(.*) of *([^ ]*)(:? *at *([^ ]*))?(:? *ETA *([^ ]*))?/;
 
 //#region YTDlpEventEmitter
 
