@@ -295,7 +295,7 @@ export default class YTDlpWrap {
                     (error, stdout, stderr) => {
                         if (error)
                             reject(YTDlpWrap.createError(error, null, stderr));
-                        resolve(stdout);
+                        resolve(stdout.trim());
                     }
                 );
                 YTDlpWrap.bindAbortSignal(abortSignal, ytDlpProcess);
